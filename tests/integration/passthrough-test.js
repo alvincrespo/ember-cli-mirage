@@ -14,6 +14,39 @@ module('Integration | Passthrough', {
   }
 });
 
+test('it can passthrough namespaced paths', function(assert) {
+  assert.expect(2);
+  let done1 = assert.async();
+  let done2 = assert.async();
+  let { server } = this;
+
+  server.loadConfig(function() {
+    this.namespace = 'api';
+    this.get('/contacts', function() {
+      return 123;
+    });
+    this.passthrough('/addresses');
+  });
+
+  $.ajax({
+    method: 'GET',
+    url: '/api/contacts',
+    success(data) {
+      assert.equal(data, 123);
+      done1();
+    }
+  });
+
+  $.ajax({
+    method: 'GET',
+    url: '/addresses',
+    error(reason) {
+      assert.equal(reason.status, 404);
+      done2();
+    }
+  });
+});
+
 test('it can passthrough individual paths', function(assert) {
   assert.expect(2);
   let done1 = assert.async();
